@@ -1,0 +1,11 @@
+<log realm="mux2" at="Thu Feb 21 15:25:03 ICT 2019.880">
+  <first time connect/>
+</log>
+<log realm="mux2" at="Thu Feb 21 15:25:03 ICT 2019.881">
+  <set primaryhost=10.195.52.8:7777/>
+</log>
+<log realm="serverCBS" at="Thu Feb 21 15:25:03 ICT 2019.890">
+  <iso-server>
+    listening on port 7777
+  </iso-server>
+</log>

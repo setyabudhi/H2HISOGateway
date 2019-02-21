@@ -1,0 +1,1 @@
+java.exe -cp lib/BDIISOGateway.jar;lib/jpos-1.5.0.jar;lib/jdom.jar;lib/xercesImpl-2.6.2.jar;. org.jpos.apps.qsp.QSP config/hostconn.xml

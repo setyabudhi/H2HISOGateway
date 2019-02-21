@@ -1,0 +1,3 @@
+RUNNING :
+
+java -cp jpos-1.5.0.jar;jdom.jar;xercesImpl-2.6.2.jar; org.jpos.apps.qsp.QSP hostconn.xml

@@ -1,0 +1,166 @@
+<?xml version="1.0" ?>
+
+
+<!DOCTYPE qsp-config SYSTEM "qsp-config.dtd"> 
+<qsp-config>
+ <logger name="qsp">
+    <log-listener class="org.jpos.util.SimpleLogListener"/>
+	<log-listener class="org.jpos.util.RotateLogListener">
+		<property name="file" value="qsp.log" />
+		<!-- one log file every 24 hours -->
+		<property name="window" value="86400" />
+		<!-- keep 10 copies -->
+		<property name="copies" value="10" />
+		<!-- rotate if size greater than 10MB -->
+		<property name="maxsize" value="10000000" />
+</log-listener>
+    <!-- log-listener class="org.jpos.util.OperatorLogListener">
+     <property name="jpos.operator.from" value="jpos-logger@cs.com.uy"      />
+     <property name="jpos.operator.to"             value="apr@cs.com.uy"    />
+     <property name="jpos.operator.subject.prefix" value="[jPOS] "          />
+     <property name="jpos.operator.tags"           value="SystemMonitor"    />
+     <property name="jpos.operator.delay"          value="10000"            />
+     <property name="jpos.mail.smtp.host"          value="cs.cs.com.uy"     />
+    </log-listener -->
+ </logger>
+  <!-- packager="org.jpos.iso.packager.ISO87APackager"  -->
+ <control-panel rows="2" cols="0">
+  <panel name="server.channel" />
+  <panel name="cbs.channel" />
+ </control-panel>
+
+  <sequencer name="b24seq" 
+	    class="org.jpos.core.VolatileSequencer"
+	    logger="qsp" realm="b24seq.sequencer" >
+ </sequencer>
+ 
+   <sequencer name="cbsseq" 
+	    class="org.jpos.core.VolatileSequencer"
+	    logger="qsp" realm="cbsseq.sequencer" >
+ </sequencer>
+ 
+ <server name="B24" logger="qsp" realm="serverB24" port="9999" >
+  <channel name="B24-side-channel" 
+          class="org.jpos.iso.channel.BASE24Channel" 
+          packager="org.jpos.iso.packager.GenericPackager"
+		  packager-logger="qsp" 
+		  packager-realm="packager"
+          type="server" logger="qsp" realm="serverB24" connect="yes">
+
+		<property name="packager-config" 
+			value="iso87customascii.xml"/> 
+  </channel>
+  <request-listener class="org.jpos.apps.qsp.MyConnector"
+    logger="qsp" realm="connector">
+    <property name="destination-mux" value="mux" />
+    <property name="timeout" value="15000" />
+<!--	<router switch="SWPCE" type="server" destination="EIS-side-channel" timeout="50000" bounce="true" /> -->
+
+  </request-listener>
+ </server>
+ 
+ <server name="CBS" logger="qsp" realm="serverCBS" port="8888" >
+  <channel name="CBS-side-channel" 
+          class="com.my.channel.CBSBDIChannel" 
+          packager="org.jpos.iso.packager.GenericPackager"
+		  packager-logger="qsp" 
+		  packager-realm="packager"
+          type="server" logger="qsp" realm="serverPCE" connect="yes">
+
+		<property name="packager-config" 
+			value="iso93customascii.xml"/> 
+  </channel>
+  <request-listener class="org.jpos.apps.qsp.MyConnector"
+    logger="qsp" realm="connector">
+    <property name="destination-mux" value="mux2" />
+    <property name="timeout" value="15000" />
+<!--	<router switch="SWPCE" type="server" destination="EIS-side-channel" timeout="50000" bounce="true" /> -->
+
+  </request-listener>
+ </server>
+ 
+ <mux name="mux" logger="qsp" realm="mux" connect="yes">
+	<channel name="B24-channel"
+		class = "org.jpos.iso.channel.BASE24Channel"
+		packager="org.jpos.iso.packager.GenericPackager"
+				  packager-logger="qsp" 
+		  packager-realm="packager"
+		logger = "qsp" realm="acme" panel="server.channel">
+		
+		<property name="packager-config" 
+			value="iso87customascii.xml"/>
+		<property name="host" value="10.194.7.18" />
+		<property name="port" value="7551" />
+		
+		
+	</channel>
+	<request-listener class="org.jpos.apps.qsp.MyConnector"
+		logger="qsp" realm="mux">
+    
+    <property name="timeout" value="15000" />
+  </request-listener>
+ </mux>
+ 
+ <mux name="mux2" logger="qsp" realm="mux2" connect="yes">
+	<channel name="CBS-channel"
+		class = "com.my.channel.CBSBDIChannel"
+		packager="org.jpos.iso.packager.GenericPackager"
+				  packager-logger="qsp" 
+		  packager-realm="packager"
+		logger = "qsp" realm="acme" panel="cbs.channel">
+		
+		<property name="packager-config" 
+			value="iso93customascii.xml"/>
+		<property name="host" value="10.195.52.8" />
+		<property name="port" value="7777" />
+		
+		
+	</channel>
+	<request-listener class="org.jpos.apps.qsp.MyConnector"
+		logger="qsp" realm="mux">
+    
+    <property name="timeout" value="15000" />
+  </request-listener>
+ </mux>
+
+ <task class="org.jpos.apps.qsp.task.Sender" 
+    logger="qsp" realm="sender" name="signon1.sender">
+  <property name="mux" value="mux" />
+  <property name="message" value="0800-SignOn.xml" />
+  <property name="wait-for-response" value="15000" />
+  <property name="initial-delay" value="1000" />
+  <property name="delay" value="100000" />
+  <property name="sequencer" value="b24seq" />
+ </task>
+ 
+  <task class="org.jpos.apps.qsp.task.Sender" 
+    logger="qsp" realm="sender" name="echo1.sender">
+  <property name="mux" value="mux" />
+  <property name="message" value="0800-Echo.xml" />
+  <property name="wait-for-response" value="15000" />
+  <property name="initial-delay" value="10000" />
+  <property name="delay" value="10000" />
+  <property name="sequencer" value="b24seq" />
+ </task>
+ 
+ <task class="org.jpos.apps.qsp.task.Sender" 
+    logger="qsp" realm="sender" name="signon2.sender">
+  <property name="mux" value="mux2" />
+  <property name="message" value="0800-SignOn-CBS.xml" />
+  <property name="wait-for-response" value="15000" />
+  <property name="initial-delay" value="1000" />
+  <property name="delay" value="100000" />
+  <property name="sequencer" value="cbsseq" />
+ </task>
+ 
+  <task class="org.jpos.apps.qsp.task.Sender" 
+    logger="qsp" realm="sender" name="echo2.sender">
+  <property name="mux" value="mux2" />
+  <property name="message" value="0800-Echo-CBS.xml" />
+  <property name="wait-for-response" value="15000" />
+  <property name="initial-delay" value="10000" />
+  <property name="delay" value="10000" />
+  <property name="sequencer" value="cbsseq" />
+ </task>
+ 
+ </qsp-config>
